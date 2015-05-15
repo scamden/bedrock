@@ -3,7 +3,13 @@
 var fs = require('fs');
 var tasks = fs.readdirSync('./gulp/tasks/');
 var gulp = require('gulp');
-var packageInfo = JSON.parse(fs.readfileSync('./package.json'));
+var packageInfo = JSON.parse(fs.readFileSync('./package.json'));
+var karmaConfig = {};
+require('./../karma.conf.js')({
+    set: function(conf) {
+        karmaConfig = conf;
+    }
+});
 
 require('./config');
 
@@ -74,19 +80,6 @@ require('gulp-tasks-riq/watch')({
 
 require('gulp-tasks-riq/tests')();
 
-var karmaConfig = {};
-require('./../karma.conf.js')({
-    set: function(conf) {
-        karmaConfig = conf;
-    }
-});
-
-gulp.task('release', function(cb) {
-    cb(); // no op for version task
-});
-
-gulp.task('testsNoWatch', ['karma']); // need this task name for version task
-
 require('gulp-tasks-riq/version')();
 
 require('gulp-tasks-riq/karma')({
@@ -109,6 +102,16 @@ require('gulp-tasks-riq/browserify-omega')({
     }],
     dest: RELEASE_FOLDER
 });
+
+gulp.task('templates', function(cb) {
+    cb(); // noop for now, if you need template processing do it
+});
+
+gulp.task('release', function(cb) {
+    cb(); // no op for version task
+});
+
+gulp.task('testsNoWatch', ['karma']); // need this task name for version task
 
 
 tasks.forEach(function(task) {
