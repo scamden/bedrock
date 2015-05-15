@@ -22,7 +22,7 @@ var SCRIPTS_GLOB = MODULES_FOLDER + '/**/*.js';
 var TEMPLATES_GLOB = MODULES_FOLDER + '/**/*.html';
 var STYLES_GLOB = SRC_FOLDER + '/styles/**/*.scss';
 
-var INDEX_SRC = SRC_FOLDER + '/index.html';
+var INDEX_SRC = SRC_FOLDER + '/app/index.html';
 var STYLES_SRC = SRC_FOLDER + '/styles';
 
 var ASSETS_RELEASE = RELEASE_FOLDER + '/assets';
@@ -94,10 +94,10 @@ require('gulp-tasks-riq/karma')({
 
 require('gulp-tasks-riq/browserify-omega')({
     bundleConfigs: [{
-        entries: ['./' + MODULES_FOLDER + '/index.js'],
+        entries: ['./src/modules/index.js'],
         output: packageInfo.name + '.js'
     }, {
-        entries: ['./app/index.js'],
+        entries: ['./src/app/index.js'],
         output: 'app.js'
     }],
     dest: RELEASE_FOLDER
