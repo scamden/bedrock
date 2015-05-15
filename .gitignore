@@ -6,4 +6,4 @@ tmp
 test-assets
 release
 /coverage
-release/bundle*.css
+release
