@@ -45,6 +45,7 @@ export DEFAULT_NAME=$(jq -r .name package.json);
 # configuration settings
 export FEAT_APP=$(jq -r .iqproj.app package.json)
 export FEAT_TEMPLATES=$(jq -r .iqproj.templates package.json)
+export FEAT_TS=$(jq -r .iqproj.typescript package.json)
 
 #################################################################################
 # utilities
@@ -74,6 +75,8 @@ if [ -f "build/$command" ]; then
     echo "** Override: $command (build/$command)"
     exec build/$command "$@"
 fi
+
+[ -n "$FEAT_TS" ] && BROWSERIFY_CMD="$BROWSERIFY_CMD -p [ tsify --noImplicitAny ] "
 
 #################################################################################
 # Built-in [standard] commands
