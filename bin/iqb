@@ -43,9 +43,9 @@ export ENTRY_POINT=$(jq -r .main package.json);
 export DEFAULT_NAME=$(jq -r .name package.json);
 
 # configuration settings
-export FEAT_APP=$(jq -r .iqproj.app package.json)
-export FEAT_TEMPLATES=$(jq -r .iqproj.templates package.json)
-export FEAT_TS=$(jq -r .iqproj.typescript package.json)
+export FEAT_APP=$(jq -r '.iqproj.app //empty' package.json)
+export FEAT_TEMPLATES=$(jq -r '.iqproj.templates //empty' package.json)
+export FEAT_TS=$(jq -r '.iqproj.typescript //empty' package.json)
 
 #################################################################################
 # utilities
