@@ -52,7 +52,7 @@ export FEAT_TS=$(jq -r .iqproj.typescript package.json)
 function find-next-open-port() {
     for port in $(seq $1 $(($1 + 1000))); do
         echo "\035" | /usr/bin/nc 127.0.0.1 $port > /dev/null
-        if [ $? -gt 0 ]; then 
+        if [ $? -gt 0 ]; then
             echo $port
             return 0
         fi
@@ -88,7 +88,7 @@ case $command in
     # npm lifecycle commands
     "test")
         if [ "$FEAT_APP" = "true" ]; then
-            $KARMA_CMD start --single-run --no-auto-watch karma.conf.js 
+            $KARMA_CMD start --single-run --no-auto-watch karma.conf.js
         else
             $TAPE_CMD ${1:-src/**/*.spec.js}
         fi
@@ -104,7 +104,7 @@ case $command in
         outfile=$(pwd)/tmp/templates.js
 
         echo 'module.exports = angular.module("templates", []).run(function($templateCache) {' > $outfile
-        find src \
+        find src app \
             | grep '.html' \
             | xargs -P 6 -n 1 -I{} bash -c 'echo "$(basename {}) {}"' \
             | xargs -P 6 -n 2 node -e "console.log( \
@@ -121,11 +121,11 @@ case $command in
         ;;
 
     # testing
-    "watch:test") 
+    "watch:test")
         if [ "$FEAT_APP" = "true" ]; then
-            $KARMA_CMD start karma.conf.js 
+            $KARMA_CMD start karma.conf.js
         else
-            $self test && $WATCH_CMD --silent ${1-src/**/*.spec.js} -c "$self test" 
+            $self test && $WATCH_CMD --silent ${1-src/**/*.spec.js} -c "$self test"
         fi
         ;;
 
