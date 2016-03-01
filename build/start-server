@@ -4,12 +4,13 @@
 
 var express = require('express');
 var livereload = require('tiny-lr');
-var connectLiveReload = require('connect-livereload');
 var argv = require('yargs').argv;
 
 // you're weird, argv.
 var port = argv._[0] || 8080;
 var lrport = argv._[1] || 35729;
+
+var connectLiveReload = require('connect-livereload')({ port: lrport });
 
 console.log('*****************************************************');
 console.log('** Local Server starting on port', port);
