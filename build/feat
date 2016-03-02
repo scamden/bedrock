@@ -30,7 +30,7 @@ cat << EOF > app/index.html
     <html>
         <head>
             <title>$module_name</title>
-            <link rel="stylesheet" type="text/css" href="$module_name.scss" />
+            <link rel="stylesheet" type="text/css" href="$module_name.css" />
         </head>
         <body>
             <h1>It Works!</h1>
@@ -74,8 +74,8 @@ cat << EOF > tsd.json
   "version": "v4",
   "repo": "borisyankov/DefinitelyTyped",
   "ref": "master",
-  "path": "ts/typings",
-  "bundle": "ts/typings/tsd.d.ts"
+  "path": "typings",
+  "bundle": "typings/tsd.d.ts"
 }
 EOF
     fi
