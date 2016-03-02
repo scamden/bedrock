@@ -53,6 +53,42 @@ EOF
 
 }
 
+function write-tsproj() {
+    if [ ! -f ts/tsconfig.json ]; then
+cat << EOF > ts/tsconfig.json
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    "target": "ES5",
+    "outDir": "../release"
+  }
+}
+EOF
+    fi
+
+    if [ ! -f tsd.json ]; then
+cat << EOF > tsd.json
+{
+  "version": "v4",
+  "repo": "borisyankov/DefinitelyTyped",
+  "ref": "master",
+  "path": "ts/typings",
+  "bundle": "ts/typings/tsd.d.ts"
+}
+EOF
+    fi
+
+    if [ ! -f ts/index.ts ]; then
+cat << EOF > ts/index.ts
+///<reference path="../typings/tsd.d.ts" />
+
+export = {};
+EOF
+    fi
+}
+
 if [ -z "$featname" ]; then
     print-usage;
 fi
@@ -121,13 +157,6 @@ case $featname in
         esac
     ;;
 
-    'typescript')
-        case $featcmd in
-            'enable') npm install --save-dev tsify ;;
-            'disable') npm uninstall --save-dev tsify ;;
-        esac
-    ;;
-
     'headless')
         case $featcmd in
             'enable')
@@ -151,7 +180,24 @@ case $featname in
         esac
     ;;
 
-    # t/f flag only
+    'typescript')
+        case $featcmd in
+            'enable')
+                npm install --save-dev typescript
+                mkdir -p ts/
+                write-tsproj
+                [ ! -f tsd.json ] && tsd init
+                ;;
+            'disable')
+                npm uninstall --save-dev typescript
+                ;;
+            *)
+                print-usage "feat: unknown command $featcmd"
+                exit 1;
+                ;;
+        esac
+    ;;
+
     'templates') ;;
 
     *)
