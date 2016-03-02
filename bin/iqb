@@ -166,7 +166,7 @@ case $command in
     "serve")
         SRV_PORT=$(find-next-open-port 8080)
         LR_PORT=$(find-next-open-port 35729)
-        $PARALLEL_CMD ::: "$self start-server $SRV_PORT $LR_PORT" "$self livereload $LR_PORT"
+        $PARALLEL_CMD ::: "$self start-server --port $SRV_PORT --lr-port $LR_PORT release" "$self livereload $LR_PORT"
         ;;
 
     # entry points
