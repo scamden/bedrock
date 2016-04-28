@@ -28,7 +28,7 @@ if [ ! -f ~/.salesforceiq/infraiq_cookie ]; then
 
   docker run -it --rm \
     -e AUTH_DIR=/auth \
-    -v /Users/jchrzanowski/.salesforceiq:/auth \
+    -v $HOME/.salesforceiq:/auth \
     docker.amz.relateiq.com/relateiq/infraiq_cli:staging \
     login
 
@@ -46,7 +46,7 @@ PROXY_HOST='https://app-staging.salesforceiq.com'
 
 while [ $# -gt 0 ]; do
   case $1 in
-    "--no-build") SKIP_BUILD='true' ;;
+    "-b"|"--no-build") SKIP_BUILD='true' ;;
     "--api")
       ix=$(($ix + 1))
       PROXY_HOST="${!ix}"
@@ -62,14 +62,7 @@ done
 ###################################################################################################
 # DETERMINE THE HOSTNAME
 if [ -z "$DCOS_APP_NAME" ]; then
-  DCOS_APP_NAME=wm-$(jq ".name" package.json)
-
-  case $DCOS_APP_NAME in "staging"|"canary"|"master"|"prod"|"app-staging"|"app-canary"|"app")
-    echo "!! Cannot deploy branch '$DCOS_APP_NAME'"
-    echo "!! Please re-run with a hostname argument"
-    echo print-usage
-    exit 1
-  ;; esac
+  DCOS_APP_NAME=wm-$(jq -r ".name" package.json)
 fi
 
 ###################################################################################################
@@ -82,8 +75,10 @@ fi
 set -e
 echo "Deploying local state to DCOS [$DCOS_APP_NAME]"
 echo -n 'Copying assets... '
+
 cp build/start-server docker/
-cp release/* docker/public
+cp -R release docker/public
+
 echo 'DONE'
 
 pushd docker > /dev/null
@@ -92,16 +87,17 @@ pushd docker > /dev/null
   echo "DONE -- $container_id"
   echo 'Tag and push...'
 
-  docker tag -f $container_id docker.amz.relateiq.com/dcoswm-$DCOS_APP_NAME:latest
-  docker push docker.amz.relateiq.com/dcoswm-$DCOS_APP_NAME:latest
+  docker tag -f $container_id docker.amz.relateiq.com/dcos-webmod/$DCOS_APP_NAME:latest
+  docker push docker.amz.relateiq.com/dcos-webmod/$DCOS_APP_NAME:latest
 
   echo '-------------------------------------------------------------'
   echo 'Deploying...'
-  docker run --rm docker.amz.relateiq.com/relateiq/infraiq_cli:staging \
-    run \
-    -e AUTH_DIR=/auth
-    -v /tmp:/auth
-    -a $DCOS_APP_NAME \
-    -e IQ_SERVER_PROXY=$PROXY_HOST \
-    docker.amz.relateiq.com/dcoswm-${DCOS_APP_NAME}:latest
+  docker run --rm                                        \
+    -e AUTH_DIR=/auth                                    \
+    -e IQ_SERVER_PROXY=$PROXY_HOST                       \
+    -v $HOME/.salesforceiq:/auth                         \
+    docker.amz.relateiq.com/relateiq/infraiq_cli:staging \
+    run                                                  \
+    -a $DCOS_APP_NAME                                    \
+    docker.amz.relateiq.com/dcos-webmod/${DCOS_APP_NAME}:latest
 popd > /dev/null
