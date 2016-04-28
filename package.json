@@ -1,30 +1,55 @@
 {
-  "name": "perf-zone",
-  "version": "0.0.0",
-  "description": "a template for basic js packages",
-  "main": "src/index.js",
-  "devDependencies": {
-    "browserify-istanbul": "~0.1.5",
-    "gulp": "~3.8.11",
-    "gulp-tasks-riq": "~0.2.0",
-    "karma": "~0.12.31",
-    "yargs": "~3.9.0"
+  "name": "bedrock",
+  "version": "0.0.1",
+  "description": "a template for basic ts packages",
+  "main": ".src/index.js",
+  "homepage": "https://github.com/relateiq/bedrock",
+  "repository": {
+    "url": "https://github.com/relateiq/bedrock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/relateiq/bedrock/issues"
   },
   "scripts": {
-    "test": "gulp karma"
+    "test": "bin/iqb test",
+    "start": "bin/iqb start",
+    "preversion": "bin/iqb test"
   },
-  "author": "rusty.camden@gmail.com",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/relateiq/perf-zone.git"
+  "peerDependencies": {
+    "angular": "1.x"
   },
-  "keywords": [
-    "performance",
-    "javascript"
-  ],
-  "bugs": {
-    "url": "https://github.com/relateiq/perf-zone/issues"
+  "devDependencies": {
+    "aliasify": "~1.9.0",
+    "browserify": "~13.0.0",
+    "chokidar-cli": "~1.0.1",
+    "connect-livereload": "~0.5.4",
+    "exorcist": "~0.4.0",
+    "express": "~4.13.4",
+    "http-proxy": "~1.13.2",
+    "jquery": "~2.1.0",
+    "node-sass": "~3.4.2",
+    "riq-partialify": "~3.1.6",
+    "shallow-diff": "0.0.5",
+    "tap-min": "~1.1.0",
+    "tape": "~4.5.1",
+    "tiny-lr": "~0.2.1",
+    "typescript": "~1.8.7",
+    "typings": "~0.8.1",
+    "uiq": "~0.63.3",
+    "watchify": "~3.7.0",
+    "web-core-router": "0.0.3",
+    "yargs": "~4.2.0"
   },
-  "homepage": "https://github.com/relateiq/perf-zone"
+  "publishConfig": {
+    "registry": "https://relateiq.artifactoryonline.com/relateiq/api/npm/npm-local/"
+  },
+  "browserify-shim": {},
+  "browserify": {
+    "transform": [
+      "riq-partialify"
+    ]
+  },
+  "dependencies": {
+    "sugar": "~1.4.1"
+  }
 }
