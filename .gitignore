@@ -1,8 +1,10 @@
 .idea
 .sass-cache
+npm-debug.log
+tsd-debug.log
 node_modules
-build
-tmp
-test-assets
-/coverage
-release
+
+.src/
+.app/
+release/
+typings/
