@@ -195,3 +195,24 @@ to write a CLI tool that did the same thing as the GUI, would I be able to do
 that using only the objects in lib?".  If the answer is no, then you should
 probably think about refactoring.  *If you're building a UI component (like
 popgun, grid, or something like that, then this rule probably doesn't apply).*
+
+
+## Other Tooling
+
+### iqb deploy
+
+The deploy script will build a webapp docker container that serves assets 
+from release/.  Generally, you *shouldn't* run this locally, but instead
+should set up CI/CD in TeamCity.
+
+### iqb update
+
+Can be used to fetch updated project tooling from the upstream repository.
+This update will overwrite any changes to:
+
+ * `bin/iqb`
+ * `build/deploy`
+ * `build/start-server`
+ * `build/update`
+
+You should not make changes to these files.
