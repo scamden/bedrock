@@ -57,11 +57,7 @@ develop new components in isolation.  It's pretty cool.
 
 ## Getting Started
 
-This page is powered by `src/index.ts` and `src/index.html`.  They provide the
-entrypoint to this UI module.  Start there and build the rest of the module out
-inside of `src/`.
-
-By default UI modules export an angular module with a directive.  In the case
+UI modules should export an angular module containing a directive.  In the case
 of Modals/Dialogs you'll also probably want to export a service that makes the
 modal easy to use.  My recommendation is to create that service somewhere in
 `src/` and add it to the `angularModule` that gets exported from
@@ -150,9 +146,6 @@ https://angular.io/docs/ts/latest/guide/dependency-injection.html
 *Disclaimer: this structure is still open for discussion and is subject to
 change*
 
-Or at least, using the way I've been structuring modules to prepare for A2.0
-way, that directory structure would look more like this
-
 ```
 src                                   the TopNav module should be it's own repo based on the shell app
 ├── interfaces                        public contracts that consuming modules need to implement or know about
@@ -179,23 +172,141 @@ src                                   the TopNav module should be it's own repo 
 
 This basic structure tries to make as much of the code as possible
 framework-agnostic.  The entirety of a module's business logic (models,
-modifications, contracts, validation, etc.) should live in the `lib/` folder.
+contracts, validators, etc.) should live in the `lib/` folder.
 It should be possible to get 100% unit test coverage of this folder without
 involving angular.
 
-The UI folder contains components.  Those components have associated
-controllers.  The basic idea here is to perform **no logic in the view**.  This
-means (nearly) never accessing model values directly.  If you're tempted to do
-something like `ng-if="$scope.viewModel.prop === 'Something'"`, stop
-immediately and do this instead: `ng-if="ctrl.currentPropIs('Something')"`.
-This makes the views much simpler and the logic easier to test.
+**Rule of Thumb:** when deciding if something belongs in `lib/`, think to yourself "if I decided
+to write a CLI tool that did the same thing as the GUI, would I be able to do that using only the
+objects in lib?".  If the answer is no, then you should probably think about refactoring.  *If
+you're building a UI component (like popgun, grid, or something like that, then this rule probably
+doesn't apply).*
 
-**Rule of Thumb:** when implementing a feature, think to yourself "if I decided
-to write a CLI tool that did the same thing as the GUI, would I be able to do
-that using only the objects in lib?".  If the answer is no, then you should
-probably think about refactoring.  *If you're building a UI component (like
-popgun, grid, or something like that, then this rule probably doesn't apply).*
+The UI folder contains components.  Those components have associated controllers.  You can usually
+test the entirety of the controller logic without involving angular.  Additionally, no logic should
+be performed in views.  This means (nearly) never accessing model values directly.  If you're
+tempted to do something like `ng-if="$scope.viewModel.prop === 'Something'"`, or god forbid
+`ng-style="{'z-index': 1040 + (index && 1 || 0) + index*10}"`, then stop immediately and do this
+instead: `ng-if="ctrl.currentPropIs('Something')"`.  This makes the views much simpler and the
+logic easier to test.
 
+
+## Testing
+
+I have a pretty strong opinion regarding testing.  This shell app greatly reflects my opinions.
+Take it or leave it, but I think it's a pretty good idea.  If you don't like it, pull requests are
+welcome.
+
+Tests are written using tape as the testing framework.  I picked this over Jasmine/Karma or
+Mocha/Chai for a number of reasons:
+
+ * There's no magic (no global things that are defined in a magical land far far away)
+ * Really, there's no magic (beforeEach, afterEach, describe, it, etc. do not exist)
+ * REALLY, there's **no** magic (it's just a module you `require`)
+ * It outputs in the TAP format, which has been around since the 80s and has a wide community
+ * If you do need to run tests against a DOM, you can use jsdom, phantom, or you can just
+   browserify up the tests and run them in the browser.  Tape has no opinion here.
+ * It's just so insanely tiny and fast
+ * I looked at the documentation like twice and was good to go. There's almost nothing to learn
+ * There's no configuration file either because there's nothing magical that needs it
+
+You should test enough things to feel comfortable that the system works, and if you start
+spending a lot of time discussing the testing frameworks/strategies/whatever then it 
+distracts you from building the thing you're trying to test.
+
+### But How Do I Debug???
+
+`node-inspector` is the bees knees.  `npm install -g node-inspector` and then `node-debug
+.src/SomeModule.js` to debug it.
+
+Note that you have to run `node-debug` on the compiled JS file, **but** `node-debug` 
+understands sourcemaps, so you'll actually be debugging TS.  :yey:
+
+### Mocks 
+
+No opinions here.
+
+### Spies
+
+I don't like 'em.  I think they're a code smell.  You won't hear anything else about them.
+
+### Unit Tests
+
+Unit tests should do what they say on the box.  They should test a single unit of the application.
+If your unit test has a lot of requires/imports, you're probably not writing a unit test.
+
+Generally, unit tests will test everything in `lib/` and (ideally) all of the angular controllers
+in the `ui/` folder.  If the code is structured properly, then it should be possible to isolate 
+the logic and test it without using angular, browserify, or any other heavy dependencies.
+
+**The Wrong Way**: put it all in one file
+```typescript
+angular.module('MyModule', [])
+  .directive('sampleModule', function() {
+    return {
+      restrict: 'E',
+      scope: {},
+      controller: function($q, $http) {
+        this.isHardToTest() {
+          // because you have to bootstrap angular just to access this method,
+          // which means you also have to browserify everything.
+          // but clearly you don't need angular to test that this returns 4.
+          return 2 + 2;
+        }
+      },
+      controllerAs: 'ctrl',
+      template: require('./index.html')
+    }
+  });
+```
+
+**The Right Way**: split it up
+```typescript
+import SampleModuleCtrl from './SampleModule';
+
+angular.module('MyModule', [])
+  .directive('sampleModule', function() {
+    return {
+      restrict: 'E',
+      scope: {},
+      controller: SampleModuleCtrl,
+      controllerAs: 'ctrl',
+      template: require('./index.html')
+    }
+  });
+```
+
+```typescript
+export class SampleModuleCtrl {
+  constructor($q, $http) {
+    // for testing purposes, you can provide your own implementations
+    // of $q and $http without involving angular. 
+  }
+
+  public isNoLongerHardToTest() {
+    // because you have 0 dependencies on angular here
+    return 2 + 2;
+  }
+}
+```
+
+### Integration Tests
+
+**Disclaimer**: there is 0 tooling in place to do this right now.  But there will be.  And this is
+how it'll work.
+
+Integration tests can make sure that when all of the individual units are put together (or
+*integrated*... get it?), the entire system works as expected.  You should have far fewer
+integration tests than unit tests.  They will also run less frequently (only on build, not during
+normal development) and take longer than unit tests.
+
+Integration tests should live somewhere in the `app/` folder, as they'll likely require things like
+a DOM, angular, UIQ, and other peer dependencies.  Since the shell app also provides a similar
+environment to the webapp, it's an ideal place to make sure all the pieces fit together.
+
+### Functional Tests
+
+We call them smoke tests.  They're generally run by CI/CD.
 
 ## Other Tooling
 
@@ -204,6 +315,9 @@ popgun, grid, or something like that, then this rule probably doesn't apply).*
 The deploy script will build a webapp docker container that serves assets 
 from release/.  Generally, you *shouldn't* run this locally, but instead
 should set up CI/CD in TeamCity.
+
+This script requires either docker-machine, the docker for mac beta, or a linux machine
+to work properly.
 
 ### iqb update
 
@@ -214,5 +328,10 @@ This update will overwrite any changes to:
  * `build/deploy`
  * `build/start-server`
  * `build/update`
+ * `docker-dev/Dockerfile`
+ * `docker-dev/README.md`
+ * `docker/Dockerfile`
+ * `docker/package.json`
+ * `docker/README.md`
 
-You should not make changes to these files.
+You should not make changes to any of these files.
