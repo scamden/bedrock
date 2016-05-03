@@ -78,7 +78,7 @@ to work properly.  To this effect, globals like `module` or `require` or
 `typings/` directory is for.  To install type definitions for a module that you
 want to use, but didn't write, you can run:
 
-```bash
+```
 typings install modulename --save --ambient
 ```
 
@@ -216,19 +216,19 @@ distracts you from building the thing you're trying to test.
 
 ### But How Do I Debug???
 
-`node-inspector` is the bees knees.  `npm install -g node-inspector` and then `node-debug
+`node-inspector` is the bee's knees.  `npm install -g node-inspector` and then `node-debug
 .src/SomeModule.js` to debug it.
 
 Note that you have to run `node-debug` on the compiled JS file, **but** `node-debug` 
 understands sourcemaps, so you'll actually be debugging TS.  :yey:
 
+### Spies
+
+I don't like 'em.  I think they're a code smell.
+
 ### Mocks 
 
 No opinions here.
-
-### Spies
-
-I don't like 'em.  I think they're a code smell.  You won't hear anything else about them.
 
 ### Unit Tests
 
@@ -248,9 +248,11 @@ angular.module('MyModule', [])
       scope: {},
       controller: function($q, $http) {
         this.isHardToTest() {
-          // because you have to bootstrap angular just to access this method,
-          // which means you also have to browserify everything.
-          // but clearly you don't need angular to test that this returns 4.
+          /*
+           * this is hard to test because you have to bootstrap angular just to access this method,
+           * and because of the HTML require, you also have to browserify everything... which is lame
+           * you clearly don't need angular to test that this returns 4
+           */
           return 2 + 2;
         }
       },
@@ -284,7 +286,7 @@ export class SampleModuleCtrl {
   }
 
   public isNoLongerHardToTest() {
-    // because you have 0 dependencies on angular here
+    // super easy to test because you have 0 dependencies on angular here
     return 2 + 2;
   }
 }
