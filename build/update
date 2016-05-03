@@ -38,6 +38,11 @@ if [ -z "$1" ]; then
         build/deploy
         build/start-server
         build/update
+        docker-dev/Dockerfile
+        docker-dev/README.md
+        docker/Dockerfile
+        docker/package.json
+        docker/README.md
     )
 
     # update the core system files
