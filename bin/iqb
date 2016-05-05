@@ -95,7 +95,7 @@ mkdir -p release/
 # super basic override functionality.  here it's mostly used to run build steps
 # written in non-bash or that are complicated enough to merit their own file
 if [ -f "build/$command" ]; then
-  echo "• ${colors[orange]}RUN${colors[reset]} ${command} ===> build/$command $*"
+  echo "• ${colors[brown]}RUN${colors[reset]} ${command} ===> build/$command $*"
   exec build/$command "$@"
 else
   echo "• ${colors[blue]}RUN${colors[reset]} $command $*"
