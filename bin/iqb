@@ -194,7 +194,7 @@ case $command in
     mkdir -p .app/src
 
     pushd app > /dev/null
-      rsync -am --include='*/' --include='*.html' --exclude='*' . ../.app/src
+      rsync -am --include='*/' --include='*.html' --exclude='*' . ../.app
     popd > /dev/null
 
     cp app/index.html release/ 
