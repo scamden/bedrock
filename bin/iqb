@@ -53,23 +53,27 @@ export DEFAULT_NAME=$(jq -r .name package.json);
 # utilities
 # if tput isn't found (eg: teamcity, docker containers, etc.) turn it into a no-op
 declare -A colors
-colors[black]=$(echo -e '\e[30m')
-colors[red]=$(echo -e '\e[31m')
-colors[green]=$(echo -e '\e[32m')
-colors[brown]=$(echo -e '\e[33m')
-colors[blue]=$(echo -e '\e[34m')
-colors[purple]=$(echo -e '\e[35m')
-colors[cyan]=$(echo -e '\e[36m')
-colors[light_gray]=$(echo -e '\e[37m')
-colors[gray]=$(echo -e '\e[90m')
-colors[light_red]=$(echo -e '\e[91m')
-colors[light_green]=$(echo -e '\e[92m')
-colors[yellow]=$(echo -e '\e[93m')
-colors[light_blue]=$(echo -e '\e[94m')
-colors[light_purple]=$(echo -e '\e[95m')
-colors[light_cyan]=$(echo -e '\e[96m')
-colors[white]=$(echo -e '\e[97m')
-colors[reset]=$(echo -e '\e[0m')
+
+# dont print shell codes if running in a dumb terminal
+if [ -n "$TERM" -a ! "$TERM" = "dumb" ]; then
+  colors[black]=$(echo -e '\e[30m')
+  colors[red]=$(echo -e '\e[31m')
+  colors[green]=$(echo -e '\e[32m')
+  colors[brown]=$(echo -e '\e[33m')
+  colors[blue]=$(echo -e '\e[34m')
+  colors[purple]=$(echo -e '\e[35m')
+  colors[cyan]=$(echo -e '\e[36m')
+  colors[light_gray]=$(echo -e '\e[37m')
+  colors[gray]=$(echo -e '\e[90m')
+  colors[light_red]=$(echo -e '\e[91m')
+  colors[light_green]=$(echo -e '\e[92m')
+  colors[yellow]=$(echo -e '\e[93m')
+  colors[light_blue]=$(echo -e '\e[94m')
+  colors[light_purple]=$(echo -e '\e[95m')
+  colors[light_cyan]=$(echo -e '\e[96m')
+  colors[white]=$(echo -e '\e[97m')
+  colors[reset]=$(echo -e '\e[0m')
+fi
 
 function find-next-open-port() {
   set +e
