@@ -180,6 +180,24 @@ case $command in
     popd > /dev/null
   ;;
 
+  "test:ts")
+    if [ -z "$1" ]; then
+      echo "Must specify a spec file"
+      exit 1;
+    fi
+
+    $self "test" $(echo $1 | sed s,ts$,js,g | sed s,src/,.src/,g)
+    ;;
+
+  "test:debug")
+    if [ -z "$1" ]; then
+      echo "Must specify a spec file"
+      exit 1;
+    fi
+
+    node-debug $TAPE_CMD $(echo $1 | sed s,ts$,js,g | sed s,src/,.src/,g)
+    ;;
+
   ###########################################################################################################
   # js (browserify)
   ###########################################################################################################
