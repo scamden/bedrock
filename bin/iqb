@@ -49,13 +49,37 @@ export ENTRY_POINT=$(jq -r .main package.json);
 export SRC_MAIN=$(jq -r .iqproj.main package.json);
 export DEFAULT_NAME=$(jq -r .name package.json);
 
+
+#################################################################################
+# Built-in [standard] commands
+OPT_SKIP_TESTS=''
+OPT_COLOR_LEVEL=$OPT_COLOR_LEVEL
+
+ARGSARR=( "$@" )
+ix=1
+
+while [ $ix -le ${#ARGSARR[@]} ]; do
+  echo ${ARGSARR[$ix]} | grep -E '^\-\w\w' > /dev/null
+
+  if [ $? -eq 0 ]; then
+    ARGSARR+=($(echo ${ARGSARR[$ix]} | sed 's,-,,g' | sed -E 's,[a-zA-Z],-& ,g'))
+  else
+    case ${ARGSARR[$ix]} in
+      "-c"|"--no-color") OPT_COLOR_LEVEL='nocolor' ;;
+      "-t"|"--no-test"|"--no-tests") OPT_SKIP_TESTS='true' ;;
+    esac
+  fi
+
+  ix=$(($ix + 1))
+done
+
 #################################################################################
 # utilities
 # if tput isn't found (eg: teamcity, docker containers, etc.) turn it into a no-op
 declare -A colors
 
 # dont print shell codes if running in a dumb terminal
-if [ -n "$TERM" -a ! "$TERM" = "dumb" ]; then
+if [ -z "$OPT_COLOR_LEVEL" ]; then
   colors[black]=$(echo -e '\e[30m')
   colors[red]=$(echo -e '\e[31m')
   colors[green]=$(echo -e '\e[32m')
@@ -73,6 +97,8 @@ if [ -n "$TERM" -a ! "$TERM" = "dumb" ]; then
   colors[light_cyan]=$(echo -e '\e[96m')
   colors[white]=$(echo -e '\e[97m')
   colors[reset]=$(echo -e '\e[0m')
+else
+  export OPT_COLOR_LEVEL="nocolor"
 fi
 
 function find-next-open-port() {
@@ -104,27 +130,6 @@ if [ -f "build/$command" ]; then
 else
   echo "• ${colors[blue]}RUN${colors[reset]} $command $*"
 fi
-
-#################################################################################
-# Built-in [standard] commands
-OPT_SKIP_TESTS=''
-
-ARGSARR=( "$@" )
-ix=0
-
-while [ $ix -lt ${#ARGSARR[@]} ]; do
-  echo ${ARGSARR[$ix]} | grep -E '^\-\w\w' > /dev/null
-
-  if [ $? -eq 0 ]; then
-    ARGSARR+=($(echo ${ARGSARR[$ix]} | sed 's,-,,g' | sed -E 's,[a-zA-Z],-& ,g'))
-  else
-    case ${ARGSARR[$ix]} in
-      "-t"|"--no-test"|"--no-tests") OPT_SKIP_TESTS='true' ;;
-    esac
-  fi
-
-  ix=$(($ix + 1))
-done
 
 # NOTE: this uses node to get precision beyond seconds
 START_TIME=$(node -e "console.log(+new Date())")
@@ -161,7 +166,13 @@ case $command in
   # tests
   ###########################################################################################################
   "watch:test") $self test && $CMD_WATCH --silent '.src/**/*.spec.js' -c "$self test" ;;
-  "test")       $CMD_TAPE "${1:-.src/**/*.spec.js}" | node_modules/tap-min/bin/tap-min ;;
+  "test")
+    if [ -z "$OPT_COLOR_LEVEL" ]; then
+      $CMD_TAPE "${1:-.src/**/*.spec.js}" | node_modules/tap-min/bin/tap-min
+    else
+      $CMD_TAPE "${1:-.src/**/*.spec.js}"
+    fi
+    ;;
 
   ###########################################################################################################
   # scss
