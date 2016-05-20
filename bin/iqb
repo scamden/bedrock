@@ -55,7 +55,7 @@ export DEFAULT_NAME=$(jq -r .name package.json);
 declare -A colors
 
 # dont print shell codes if running in a dumb terminal
-if [[ "$-" = *i* ]]; then 
+if [ -n "$TERM" -a ! "$TERM" = "dumb" ]; then
   colors[black]=$(echo -e '\e[30m')
   colors[red]=$(echo -e '\e[31m')
   colors[green]=$(echo -e '\e[32m')
