@@ -15,9 +15,12 @@ RUN apk add --update git make g++ python && \
 # utilities needed by the build (also silence parallel)
 RUN apk add --update parallel jq zsh grep sed ncurses git findutils && \
     mkdir -p ~/.parallel && touch ~/.parallel/will-cite
-RUN apk add --update rsync
+RUN apk add --update rsync docker
 
 ENV SASS_BINARY_PATH /lib/libsass.node
+
+# because it's annoying.
+RUN git config --global push.default simple
 
 # entrypoint needs to actually exist, so create a symlink
 # that will point to the place where it will eventually be
