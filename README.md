@@ -256,7 +256,7 @@ angular.module('MyModule', [])
       restrict: 'E',
       scope: {},
       controller: function($q, $http) {
-        this.isHardToTest() {
+        this.isHardToTest = function() {
           /*
            * this is hard to test because you have to bootstrap angular just to access this method,
            * and because of the HTML require, you also have to browserify everything... which is lame
