@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-self=$0
+export self=$0
 command=$1
 shift
 
