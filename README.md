@@ -3,6 +3,10 @@
 Because I'm tired of typing it, going forward "Angular 1.x" will be referred to
 as "A1.x" and 2.0 will be "A2.0".  You've been warned.
 
+ > **Disclaimer**: the shell app relies on some tooling and dependencies that are private to
+ > SalesforceIQ, and therefore this may not be useable "as-is" for non-SalesforceIQ development.
+ > It should be a pretty good start though.
+
 ## What is the Shell App
 
 It's a Typescript/A1.x based shell that provides the same basic
@@ -22,6 +26,7 @@ develop new components in isolation.  It's pretty cool.
 ├── app                   The source code for the shell application (super simple angular app)
 │   ├── app.scss          SCSS specific to the app shell (should be minimal)
 │   ├── index.html        HTML that powers the app shell (should be minimal)
+│   ├── index.spec.ts     Integration tests (can exist in any subdirectory of app/)
 │   ├── index.ts          Boostraps the A1.x shell app (should be minimal)
 │   └── tsconfig.json     Typescript project file for the app
 ├── assets
@@ -187,17 +192,18 @@ test the entirety of the controller logic without involving angular.  Additional
 be performed in views.  This means (nearly) never accessing model values directly.  If you're
 tempted to do something like `ng-if="$scope.viewModel.prop === 'Something'"`, or god forbid
 `ng-style="{'z-index': 1040 + (index && 1 || 0) + index*10}"`, then stop immediately and do this
-instead: `ng-if="ctrl.currentPropIs('Something')"`.  This makes the views much simpler and the
+instead: `ng-if="ctrl.currentPropIs('Something')"` or `ng-style="{'z-index':
+$ctrl.getZIndex(index)}"`.  This makes the views much simpler and the
 logic easier to test.
 
 
 ## Testing
 
-I have a pretty strong opinion regarding testing.  This shell app greatly reflects my opinions.
+I have pretty strong opinions regarding testing.  This shell app greatly reflects my opinions.
 Take it or leave it, but I think it's a pretty good idea.  If you don't like it, pull requests are
 welcome.
 
-Tests are written using tape as the testing framework.  I picked this over Jasmine/Karma or
+Tests are written using tape as the testing framework.  I picked this over Jasmine or
 Mocha/Chai for a number of reasons:
 
  * There's no magic (no global things that are defined in a magical land far far away)
@@ -213,6 +219,9 @@ Mocha/Chai for a number of reasons:
 You should test enough things to feel comfortable that the system works, and if you start
 spending a lot of time discussing the testing frameworks/strategies/whatever then it 
 distracts you from building the thing you're trying to test.
+
+Both unit tests and integration tests are written with tape.  Unit tests are executed as-is using 
+raw node.  Integration tests are browserified and executed with Karma + Headless Firefox.
 
 ### But How Do I Debug???
 
@@ -266,6 +275,8 @@ angular.module('MyModule', [])
 ```typescript
 import SampleModuleCtrl from './SampleModule';
 
+// now this file has no logic that needs testing.  its behavior can be tested in an
+// integration test instead of a unit test.
 angular.module('MyModule', [])
   .directive('sampleModule', function() {
     return {
@@ -282,7 +293,7 @@ angular.module('MyModule', [])
 export class SampleModuleCtrl {
   constructor($q, $http) {
     // for testing purposes, you can provide your own implementations
-    // of $q and $http without involving angular. 
+    // of $q and $http without involving angular.
   }
 
   public isNoLongerHardToTest() {
@@ -294,32 +305,51 @@ export class SampleModuleCtrl {
 
 ### Integration Tests
 
-**Disclaimer**: there is 0 tooling in place to do this right now.  But there will be.  And this is
-how it'll work.
+Integrations tests are written in tape and executed in a headless firefox browser using Karma.
 
 Integration tests can make sure that when all of the individual units are put together (or
 *integrated*... get it?), the entire system works as expected.  You should have far fewer
 integration tests than unit tests.  They will also run less frequently (only on build, not during
-normal development) and take longer than unit tests.
+normal development) and take longer than unit tests.  Browserifying the code, starting
+karma, and starting a headless browser all takes time (usually 5-10 seconds), and so **an
+integration test watcher will NOT automatically start with the `start` command.  You'll need to
+explicitly pass `-i` if you want integration tests to run**.
 
 Integration tests should live somewhere in the `app/` folder, as they'll likely require things like
 a DOM, angular, UIQ, and other peer dependencies.  Since the shell app also provides a similar
 environment to the webapp, it's an ideal place to make sure all the pieces fit together.
 
+Writing integration tests is as simple as just creating a `*.spec.ts` file inside of the `app/`
+folder.  The difference between a unit test and an integration test is just that integration tests
+have access to the DOM; the actual code looks pretty much identical.  Integration tests are executed
+after the shell-app has bootstrapped, and (unless you manually change the view) will execute against
+the default view specified in `app/index.ts`.
+
+Here's an example integration test:
+
+```typescript
+///<reference path="../../typings/browser.d.ts" />
+const test = require('tape');
+
+// define a test using tape (same exact way as writing a unit test)
+test('first available option is checked', t => {
+  // this test has access to the same global variables as app/index.ts
+  let elems = jQuery("create-list-view [dts='riq_pick_radio'] li"); 
+
+  // run a few assertions to make sure the expected DOM structure is there
+  t.ok(elems.length > 1, 'the create list modal should have at least 1 option available');
+  t.ok(elems[0].classList.contains('riq-pick-option-selected'), 'and the first should be selected');
+
+  // woohoo!
+  t.end();
+})
+```
+
 ### Functional Tests
 
 We call them smoke tests.  They're generally run by CI/CD.
 
-## Other Tooling
-
-### iqb deploy
-
-The deploy script will build a webapp docker container that serves assets 
-from release/.  Generally, you *shouldn't* run this locally, but instead
-should set up CI/CD in TeamCity.
-
-This script requires either docker-machine, the docker for mac beta, or a linux machine
-to work properly.
+## Other Tooling 
 
 ### iqb update
 
@@ -327,6 +357,7 @@ Can be used to fetch updated project tooling from the upstream repository.
 This update will overwrite any changes to:
 
  * `bin/iqb`
+ * `bin/headless`
  * `build/deploy`
  * `build/start-server`
  * `build/update`
@@ -336,4 +367,27 @@ This update will overwrite any changes to:
  * `docker/package.json`
  * `docker/README.md`
 
-You should not make changes to any of these files.
+You should not make changes to any of these files.  Those changes will get clobbered the next time
+you run `iqb update`.
+
+## SalesforceIQ Employees Only
+
+### iqproj
+
+You can initialize a new web-module by running `iqproj new webmod <name>`.  This command is 
+defined in our development environment and will clone this repo, squash the commits, and do
+some renaming in the `package.json` file.
+
+### CI/CD
+
+Once you've created a new web-module, you should set up CI/CD for the module.  Contact a team lead
+to set this up.  You can see a list of all web modules currently under CI/CD at
+https://teamcity.amz.relateiq.com/project.html?projectId=RIQ2014_WebModules
+
+### iqb deploy
+
+The deploy script will build a webapp docker container that serves assets from release/.  Generally,
+you *shouldn't* run this locally, but instead should set up CI/CD in TeamCity.
+
+This script requires either docker-machine, the docker for mac beta, or a linux machine
+to work properly.

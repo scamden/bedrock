@@ -35,6 +35,7 @@ git reset
 if [ -z "$1" ]; then
     system_files=(
         bin/iqb
+        bin/headless
         build/deploy
         build/start-server
         build/update

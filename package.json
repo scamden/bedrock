@@ -16,7 +16,8 @@
     "preversion": "bin/iqb test"
   },
   "peerDependencies": {
-    "angular": "1.x"
+    "angular": "1.x",
+    "angular-component": "0.x"
   },
   "devDependencies": {
     "aliasify": "~1.9.0",
@@ -27,8 +28,15 @@
     "express": "~4.13.4",
     "http-proxy": "~1.13.2",
     "jquery": "~2.1.0",
+    "karma": "~0.13.22",
+    "karma-browserify": "~5.0.5",
+    "karma-chrome-launcher": "~1.0.1",
+    "karma-script-launcher": "~1.0.0",
+    "karma-tap": "~1.0.4",
+    "karma-teamcity-reporter": "~1.0.0",
     "node-sass": "~3.4.2",
     "riq-partialify": "~3.1.6",
+    "riq-tap-teamcity": "~1.1.1",
     "shallow-diff": "0.0.5",
     "tap-min": "~1.1.0",
     "tape": "~4.5.1",
