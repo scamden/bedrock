@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-export self=$0
+self=$0
 command=$1
 shift
 
@@ -189,7 +189,7 @@ case $command in
   "watch:test:unit")        $CMD_WATCH --silent '.src/**/*.spec.js' -c "$self test:unit $@"; ;;
   "test:unit")
     if [ -z "$OPT_COLOR_LEVEL" ]; then
-      $CMD_TAPE "${OPT_TEST_FILES:-.src/**/*.spec.js}" | $CFG_TAPE_REPORTER
+      (set -o pipefail; $CMD_TAPE "${OPT_TEST_FILES:-.src/**/*.spec.js}" | $CFG_TAPE_REPORTER)
     else
       $CMD_TAPE "${OPT_TEST_FILES:-.src/**/*.spec.js}"
     fi
