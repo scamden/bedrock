@@ -179,14 +179,19 @@ case $command in
   ###########################################################################################################
   "test") $self test:unit $@ && $self test:integration $@ ;;
   "watch:test")
-    testcmds=("$self watch:test:unit $@")
+    testcmds=("$self watch:test:unit $*")
 
-    [ -n "$OPT_INCLUDE_INTEGRATIONS" ] && testcmds+=("$self watch:test:integration $@");
+    [ -n "$OPT_INCLUDE_INTEGRATIONS" ] && testcmds+=("$self watch:test:integration $*");
 
     ${=CMD_PARALLEL} ::: "${testcmds[@]}"
     ;;
 
-  "watch:test:unit")        $CMD_WATCH --silent '.src/**/*.spec.js' -c "$self test:unit $@"; ;;
+  "watch:test:unit")
+    # use polling because somehow the typescript compiler's watch doesn't fire change events...
+    # neither vim nor chokidar realized that the files had changed
+    $CMD_WATCH --silent -i -p '.src/**/*.spec.js' -c "$self test:unit $*";
+    ;;
+
   "test:unit")
     if [ -z "$OPT_COLOR_LEVEL" ]; then
       (set -o pipefail; $CMD_TAPE "${OPT_TEST_FILES:-.src/**/*.spec.js}" | $CFG_TAPE_REPORTER)
