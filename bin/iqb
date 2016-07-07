@@ -171,7 +171,7 @@ case $command in
 
   "install")
     $CMD_NPM install
-    $CMD_TYPINGS install
+    $CMD_TYPINGS install --global
     ;;
 
   ##############################################################################
@@ -207,7 +207,7 @@ case $command in
   ###########################################################################################################
   # scss
   ###########################################################################################################
-  "watch:scss") $self build:scss $@ && $CMD_WATCH --silent 'src/**/*.scss' -c "$self build:scss $@" ;;
+  "watch:scss") $self build:scss $@ && $CMD_WATCH --silent 'app/**/*.scss' 'src/**/*.scss' -c "$self build:scss $@" ;;
   "build:scss") [ -f app/app.scss ] && ($CMD_SASS app/app.scss > release/app.css || exit 1) ;;
 
   ###########################################################################################################
@@ -240,7 +240,12 @@ case $command in
       exit 1;
     fi
 
-    node-debug $TAPE_CMD $(echo $OPT_TEST_FILES | sed s,ts$,js,g | sed s,src/,.src/,g)
+    # might as well
+    if ! hash node-debug; then
+      npm install -g node-inspector
+    fi
+
+    node-debug --web-port 9999 $TAPE_CMD $(echo $OPT_TEST_FILES | sed s,ts$,js,g | sed s,src/,.src/,g)
     ;;
 
   ###########################################################################################################
