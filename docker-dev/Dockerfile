@@ -22,6 +22,11 @@ ENV SASS_BINARY_PATH /lib/libsass.node
 # because it's annoying.
 RUN git config --global push.default simple
 
+# install an alpine-compatible phantomjs
+RUN apk add curl \
+    && curl -Ls https://github.com/fgrehm/docker-phantomjs2/releases/download/v2.0.0-20150722/dockerized-phantomjs.tar.gz \
+           | tar xz -C /
+
 # entrypoint needs to actually exist, so create a symlink
 # that will point to the place where it will eventually be
 WORKDIR /app
