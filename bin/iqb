@@ -57,6 +57,7 @@ OPT_COLOR_LEVEL=$OPT_COLOR_LEVEL
 OPT_INCLUDE_INTEGRATIONS=''
 CFG_KARMA_REPORTERS='progress'
 CFG_TAPE_REPORTER=node_modules/tap-min/bin/tap-min
+OPT_CLEAN_FLAG=''
 
 ARGSARR=( "$@" )
 ix=1
@@ -68,6 +69,7 @@ while [ $ix -le ${#ARGSARR[@]} ]; do
     ARGSARR+=($(echo ${ARGSARR[$ix]} | sed 's,-,,g' | sed -E 's,[a-zA-Z],-& ,g'))
   else
     case ${ARGSARR[$ix]} in
+      "--clean") OPT_CLEAN_FLAG='true' ;;
       "-c"|"--no-color") OPT_COLOR_LEVEL='nocolor' ;;
       "-t"|"--no-test"|"--no-tests") OPT_SKIP_TESTS='true' ;;
       "-T"|"--teamcity")
@@ -170,6 +172,11 @@ case $command in
     ;;
 
   "install")
+    if [ -n "$OPT_CLEAN_FLAG" ]; then
+      rm -rf node_modules
+      rm -rf typings
+    fi
+
     $CMD_NPM install
     $CMD_TYPINGS install --global
     ;;
