@@ -26,7 +26,7 @@ fi
 
 git remote | grep bedrock > /dev/null
 if [ $? -gt 0 ]; then
-    git remote add bedrock git://github.com/relateiq/bedrock.git -t iqproj
+    git remote add bedrock git://github.com/relateiq/bedrock.git -t iqproj-webmodule
 fi
 
 git fetch bedrock
@@ -47,11 +47,11 @@ if [ -z "$1" ]; then
     )
 
     # update the core system files
-    git checkout bedrock/iqproj-webmodule "${system_files[@]}"
+    git checkout bedrock/iqproj-webmodule -- "${system_files[@]}"
     git add -- "${system_files[@]}"
 else
     # update one specific file (or set of files)
-    git checkout bedrock/iqproj-webmodule "$@"
+    git checkout bedrock/iqproj-webmodule -- "$@"
     git add -- "$@"
 fi
 
