@@ -34,6 +34,7 @@
     "karma-script-launcher": "~1.0.0",
     "karma-tap": "~1.0.4",
     "karma-teamcity-reporter": "~1.0.0",
+    "llexec": "~1.0.1",
     "node-sass": "~3.4.2",
     "riq-partialify": "~3.1.6",
     "riq-tap-teamcity": "~1.1.1",

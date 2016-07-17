@@ -42,7 +42,7 @@ export CMD_WATCH=node_modules/chokidar-cli/index.js
 export CMD_SASS=node_modules/node-sass/bin/node-sass
 export CMD_TSC=node_modules/typescript/bin/tsc
 export CMD_TYPINGS=node_modules/typings/dist/bin.js
-export CMD_PARALLEL="parallel --line-buffer --halt 2"
+export CMD_PARALLEL='node_modules/llexec/lib/index.js --color=always -w firstarg'
 
 # read some names out of the package.json
 export ENTRY_POINT=$(jq -r .main package.json);
