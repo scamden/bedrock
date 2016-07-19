@@ -26,7 +26,7 @@ fi
 
 git remote | grep bedrock > /dev/null
 if [ $? -gt 0 ]; then
-    git remote add bedrock git://github.com/relateiq/bedrock.git -t iqproj-webmodule
+    git remote add bedrock git://github.com/relateiq/bedrock.git
 else
     echo "switching bedrock upstream from iqproj-webmodule to master"
     git remote remove bedrock
@@ -38,7 +38,7 @@ git reset
 
 if [ -n "$1" ]; then
     # update one specific file (or set of files)
-    git checkout bedrock/iqproj-webmodule -- "$@"
+    git checkout bedrock -- "$@"
     git add -- "$@"
     git commit -m "update bedrock: $@"
 fi
@@ -52,7 +52,7 @@ system_files=(
 )
 
 # update the core system files
-git checkout bedrock/iqproj-webmodule -- "${system_files[@]}"
+git checkout bedrock -- "${system_files[@]}"
 git add -- "${system_files[@]}"
 
 # notify that these directories are deprecated
