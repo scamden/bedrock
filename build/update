@@ -27,6 +27,10 @@ fi
 git remote | grep bedrock > /dev/null
 if [ $? -gt 0 ]; then
     git remote add bedrock git://github.com/relateiq/bedrock.git -t iqproj-webmodule
+else
+    echo "switching bedrock upstream from iqproj-webmodule to master"
+    git remote remove bedrock
+    git remote add bedrock git://github.com/relateiq/bedrock.git -t master
 fi
 
 git fetch bedrock
