@@ -39,11 +39,6 @@ if [ -z "$1" ]; then
         build/deploy
         build/start-server
         build/update
-        docker-dev/Dockerfile
-        docker-dev/README.md
-        docker/Dockerfile
-        docker/package.json
-        docker/README.md
     )
 
     # update the core system files
@@ -54,6 +49,46 @@ else
     git checkout bedrock/iqproj-webmodule -- "$@"
     git add -- "$@"
 fi
+
+# notify that these directories are deprecated
+# but don't actually delete them... just in case
+[ -d 'docker' ] && echo 'the "docker/" directory can be deleted';
+[ -d 'docker-dev' ] && echo 'the "docker-dev/" directory can be deleted';
+
+# update iqb npm packages
+npm_packages=(
+    aliasify@1.x
+    browserify@13.x
+    chokidar-cli@1.x
+    connect-livereload@0.x
+    exorcist@0.x
+    express@4.x
+    http-proxy@1.x
+    karma@0.x
+    karma-browserify@5.x
+    karma-chrome-launcher@1.x
+    karma-script-launcher@1.x
+    karma-tap@1.x
+    karma-teamcity-reporter@1.x
+    llexec@1.x
+    node-sass@3.x
+    riq-partialify@3.x
+    riq-tap-teamcity@1.x
+    shallow-diff@0.x
+    tap-min@1.x
+    tape@4.x
+    tiny-lr@0.x
+    typescript@1.x
+    typings@1.x
+    uiq@0.x
+    watchify@3.x
+    web-core-router@0.x
+    yargs@4.x
+)
+
+echo 'updating iqb system packages...'
+npm install --save-dev ${npm_packages[@]}
+git add package.json
 
 if [ ! -z "$(git status -s)" ]; then
     git commit -m "update bedrock"
