@@ -41,6 +41,8 @@ if [ -n "$1" ]; then
     git checkout bedrock -- "$@"
     git add -- "$@"
     git commit -m "update bedrock: $@"
+    echo '---- Done -----'
+    exit 0
 fi
 
 system_files=(
