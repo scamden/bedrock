@@ -8,9 +8,13 @@ command=$1
 if [ "$command" = "exec" ]; then
   exec "$@"
 elif [ "$command" = "help" ] || [ "$command" = "-h" ] || [ "$command" = "--help" ] || [ -z "$command" ]; then
+  # do some nasty shell black magic to automatically determine which flags and commands
+  # are available.
   echo "Usage: iqb <command> <flags>"
   echo 
   echo 'Built-In Commands:'
+
+  # this basically looks for case statements and prints out the line in a prettily-formatted way
   grep -o '"[a-zA-Z:]\+")\s*\(\( #.*$\)\|\(.*;;\)\)*' $self \
     | sort \
     | sed -E 's, +, ,g' \
@@ -26,6 +30,9 @@ elif [ "$command" = "help" ] || [ "$command" = "-h" ] || [ "$command" = "--help"
   echo 
   echo 
   echo "Available Flags:"
+
+  # this also looks for case statements, but is tweaked a little for matching flags instead of
+  # commands.
   grep -o '"-[a-zA-Z0-9"|-].*")\s*\( #.*$\)*' $self \
     | sed 's,^\s*",,g' \
     | sed 's,"),,g' \
@@ -38,16 +45,7 @@ fi
 shift
 
 #################################################################################
-# environment checks for parallel and jq
-# TODO: don't check on *every* run...that's a lot of checks
-which jq > /dev/null
-if [ $? -gt 0 ]; then
-  echo "!! jq not found.  installing..."
-  brew install jq
-fi
-
-#################################################################################
-# configuration (export because `parallel`)
+# configuration (export so subtasks and overrides have access too)
 export TERM=xterm-256color 
 
 export CMD_NPM=npm
@@ -63,13 +61,13 @@ export CMD_TYPINGS=node_modules/typings/dist/bin.js
 export CMD_PARALLEL='node_modules/llexec/lib/index.js --color=always -w firstarg'
 
 # read some names out of the package.json
-export ENTRY_POINT=$(jq -r .main package.json);
-export SRC_MAIN=$(jq -r .iqproj.main package.json);
-export DEFAULT_NAME=$(jq -r .name package.json);
-
+# this is a little gross but it means there's no dependency on JQ
+export ENTRY_POINT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json')).main)");
+export DEFAULT_NAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json')).name)");
 
 #################################################################################
-# Built-in [standard] commands
+# Argument parsing.  It doesn't use getopts because getopts is dumb.  The only 
+# thing it can do that this can't is required arguments, and we don't need those.
 OPT_SKIP_TESTS=''
 OPT_COLOR_LEVEL=$OPT_COLOR_LEVEL
 OPT_INCLUDE_INTEGRATIONS=''
@@ -114,7 +112,7 @@ done
 # if tput isn't found (eg: teamcity, docker containers, etc.) turn it into a no-op
 declare -A colors
 
-# dont print shell codes if running in a dumb terminal
+# dont print shell codes if --no-color is specified
 if [ -z "$OPT_COLOR_LEVEL" ]; then
   colors[black]=$(echo -e '\e[30m')
   colors[red]=$(echo -e '\e[31m')
@@ -175,9 +173,9 @@ START_TIME=$(node -e "console.log(+new Date())")
 # Any of these can be overridden by creating a `build/<taskname>` file
 set -e
 case $command in
-  ###############################################################################
+  ###########################################################################################################
   # misc
-  ###############################################################################
+  ###########################################################################################################
   "clean")
     set +e
     rm -rf .src
@@ -203,7 +201,7 @@ case $command in
     $CMD_TYPINGS install --global
     ;;
 
-  ##############################################################################
+  ###########################################################################################################
   # tests
   ###########################################################################################################
   "test") $self test:unit $@ && $self test:integration $@ ;;
@@ -231,7 +229,6 @@ case $command in
 
   "watch:test:integration") $CMD_KARMA start ;;
   "test:integration")       $CMD_KARMA start --single-run --reporters $CFG_KARMA_REPORTERS ;;
-
 
   ###########################################################################################################
   # scss
@@ -342,7 +339,6 @@ case $command in
     ;;
 
   "build") # ENTRY-POINT: build everything and output artifacts to release/
-
     $self clean
     ${=CMD_PARALLEL} ::: "$self build:ts $*" "$self build:ts:templates $*" "$self build:app:html $*";
 
