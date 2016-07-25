@@ -1,13 +1,14 @@
-# Welcome to the Shell App
+# Welcome to Bedrock
 
 Because I'm tired of typing it, going forward "Angular 1.x" will be referred to
 as "A1.x" and 2.0 will be "A2.0".  You've been warned.
 
- > **Disclaimer**: the shell app relies on some tooling and dependencies that are private to
+ > **Disclaimer**: bedrock relies on some tooling and dependencies that are private to
  > SalesforceIQ, and therefore this may not be useable "as-is" for non-SalesforceIQ development.
- > It should be a pretty good start though.
+ > Specifically, `uiq` and `web-core-router` are not open-source, so you'll need to uninstall those
+ > and remove their references from `app/index.ts`.
 
-## What is the Shell App
+## What is Bedrock
 
 It's a Typescript/A1.x based shell that provides the same basic
 environment as the CRM web application, including UIQ, Routing, and familiar
@@ -15,8 +16,10 @@ build tools.  It also provides all the fun stuff you need to get up and running
 with typescript (including build tools, basic type definitions for node,
 angular, ES6, etc.).
 
-The goal of the shell app is to provide a "playground" or wrapper that allows you to 
+The goal of bedrock is to provide a "playground" or wrapper that allows you to 
 develop new components in isolation.  It's pretty cool.
+
+Bedrock provides the foundation for the development of what we refer to as "web modules".
 
 ### Shell App Structure
 
@@ -37,13 +40,6 @@ develop new components in isolation.  It's pretty cool.
 │   ├── feat
 │   ├── start-server
 │   └── update
-├── docker                Tooling needed to deploy the shell app to DCOS
-│   ├── Dockerfile
-│   ├── README.md
-│   └── package.json
-├── docker-dev            Tooling needed to build the shell app in TeamCity
-│   ├── Dockerfile
-│   └── README.md
 ├── node_modules          node modules... 
 ├── package.json
 ├── release               Where all build artifacts end up (this is the WWW root for the local server)
@@ -68,7 +64,7 @@ modal easy to use.  My recommendation is to create that service somewhere in
 `src/` and add it to the `angularModule` that gets exported from
 `src/index.ts`, then you can inject it normal-style.
 
-The routing for the shell application is handled in `app/index.ts`.  If you
+The routing for bedrock is handled in `app/index.ts`.  If you
 change the name of the root module from `SampleModule` (and you should), then
 you'll need to update the default view in `app/index.ts` to reflect the new
 root directive.
@@ -84,7 +80,7 @@ to work properly.  To this effect, globals like `module` or `require` or
 want to use, but didn't write, you can run:
 
 ```
-typings install modulename --save --ambient
+typings install modulename --save
 ```
 
 **The order of arguments here matters**.  If you put the `--save` flag before
@@ -92,10 +88,9 @@ the module name, it won't work.  sadface.  angry face.
 
 ### Classes 
 
-Use classes when you know you'll be `new`ing an object and potentially want to
-create a class hierarchy.  **Hierarchies should be kept as shallow as
-possible**.  If you do something like `AbstractDataService ->
-SpecificDataService -> SpecificDataServiceWithFeature ->
+Use classes, but avoid deep inheritance hierarchies.  **Hierarchies should be
+kept as shallow as possible**.  If you do something like `AbstractDataService
+-> SpecificDataService -> SpecificDataServiceWithFeature ->
 MoreSpecificDataServiceWithMoreFeatures` then I will find you and scold you.
 Repeatedly.  Classes are also useful if you need to add intrinsic logic to your
 objects (getters, setters, methods).
@@ -104,17 +99,18 @@ objects (getters, setters, methods).
 separate from model/business logic (eg: anything referenced by a
 service/controller)**
 
-Use interfaces when you want to provide different implementations of the same
-contract (eg: a module facade) or when your "type" is so simple and isolated it
-doesn't merit an entire class.  This is pretty subjective so use your best
-judgement.
-
 ## Preparing for A2.0
 
 The app shell is designed to follow an "A2.0-style" structure as much as
 possible.  The A2.0 dependency injector provides a shotloaf of awesome new
 features, including injector hierarchies, custom providers, etc.  We should
 make it easy to move modules over to that structure.
+
+The conventions described below are also designed to help make unit testing as
+easy as possible.  If you follow the rules, then you *usually* won't need to
+actually load angular for your tests.  This means you don't need a DOM, which
+means that your tests don't have to be browserified to run, which makes them
+much faster.
 
 ### The A1.x Way
 
@@ -140,7 +136,7 @@ TopNav
 ```
 
 This works really well in A1.x, but in A2.0, controllers, factories, services,
-constants...  they aren't things anymore.  Everything is a class, and you
+constants aren't things anymore.  Everything is a class, and you
 create providers that create instances of classes.
 
 There's an amazing(ly long) write-up about the A2.0 injector at
@@ -151,8 +147,12 @@ https://angular.io/docs/ts/latest/guide/dependency-injection.html
 *Disclaimer: this structure is still open for discussion and is subject to
 change*
 
+Within the `src/` folder, the *only* files that should contain the word `angular` should be in
+`src/ui/**/index.ts`.  You can still use angular services like `$http` or `$q` in your classes,
+and you'll need to provide mocks in your unit tests for those services.
+
 ```
-src                                   the TopNav module should be it's own repo based on the shell app
+src                                   the TopNav module should be it's own repo based on bedrock
 ├── interfaces                        public contracts that consuming modules need to implement or know about
 |   └── ITopNav.ts
 ├── lib                               lib contains business logic. nothing UI-related should live here
@@ -160,7 +160,7 @@ src                                   the TopNav module should be it's own repo 
 |   └── top-nav-customize
 |       ├── TopNavCustomize.spec.ts   test: sidecar files next to what they're testing
 |       └── TopNavCustomize.ts        the data model / business logic for TopNavCustomization
-└── ui                                ALL UI Components live here
+└── ui                                ALL UI Components live here. There should be minimal/no business logic
     ├── top-nav
     |   ├── index.ts                  This is the only file that has anything to do with angular.
     |   ├── TopNav.spec.ts            Tests the TopNav.ts file without bootstraping an angular-app
@@ -175,26 +175,24 @@ src                                   the TopNav module should be it's own repo 
         └── TopNavSearchBar.ts
 ```
 
-This basic structure tries to make as much of the code as possible
-framework-agnostic.  The entirety of a module's business logic (models,
-contracts, validators, etc.) should live in the `lib/` folder.
-It should be possible to get 100% unit test coverage of this folder without
+This basic structure tries to make as much of the code as possible framework-agnostic.  The
+entirety of a module's business logic (models, contracts, validators, etc.) should live in the
+`lib/` folder.  It should be possible to get 100% unit test coverage of this folder without
 involving angular.
 
-**Rule of Thumb:** when deciding if something belongs in `lib/`, think to yourself "if I decided
-to write a CLI tool that did the same thing as the GUI, would I be able to do that using only the
-objects in lib?".  If the answer is no, then you should probably think about refactoring.  *If
-you're building a UI component (like popgun, grid, or something like that, then this rule probably
-doesn't apply).*
+ > **Rule of Thumb:** when deciding if something belongs in `lib/`, think to yourself "if I decided
+ > to write a CLI tool that did the same thing as the GUI, would I be able to do that using only
+ > the objects in lib?".  If the answer is no, then you should probably think about refactoring.
+ > *If you're building a UI component (like popgun, grid, or something like that, then this rule
+ > probably doesn't apply).*
 
-The UI folder contains components.  Those components have associated controllers.  You can usually
-test the entirety of the controller logic without involving angular.  Additionally, no logic should
-be performed in views.  This means (nearly) never accessing model values directly.  If you're
-tempted to do something like `ng-if="$scope.viewModel.prop === 'Something'"`, or god forbid
+The UI folder contains angular components.  Those components have associated controllers.  You can
+usually test the entirety of the controller logic without involving angular.  Additionally, no
+logic should be performed in views.  This means (nearly) never accessing model values directly.  If
+you're tempted to do something like `ng-if="$scope.viewModel.prop === 'Something'"`, or god forbid
 `ng-style="{'z-index': 1040 + (index && 1 || 0) + index*10}"`, then stop immediately and do this
 instead: `ng-if="ctrl.currentPropIs('Something')"` or `ng-style="{'z-index':
-$ctrl.getZIndex(index)}"`.  This makes the views much simpler and the
-logic easier to test.
+$ctrl.getZIndex(index)}"`.  This makes the views much simpler and the logic easier to test.
 
 
 ## Testing
@@ -231,13 +229,37 @@ raw node.  Integration tests are browserified and executed with Karma + Headless
 Note that you have to run `node-debug` on the compiled JS file, **but** `node-debug` 
 understands sourcemaps, so you'll actually be debugging TS.  :yey:
 
+### What about beforeEach/afterEach? Those are pretty nice.
+
+They are pretty nice, but having globally defined functions (like `describe`, `it`, `beforeEach`,
+`afterEach`, etc.) is not pretty nice.  To accomplish the same thing in tape, follow this pattern:
+
+```typescript
+import tape = require('tape');
+
+function test(description, unitTestFunc) {
+  // do your beforeEach stuff here
+
+  tape(description, unitTestFunc);
+
+  // do your afterEach stuff here
+}
+
+test('this is my unit test', function(t) {
+  t.equal(1, 1);
+  t.end();
+});
+```
+
 ### Spies
 
-I don't like 'em.  I think they're a code smell.
+I don't like 'em.  I think they're a code smell.  If you think you need a spy, you might need to 
+refactor your code into smaller units.  *Or* you might be trying to write an integration test, in
+which case it follows some slightly different rules (see below).
 
 ### Mocks 
 
-No opinions here.
+No opinions here.  First person to need them gets to write the docs ;)
 
 ### Unit Tests
 
@@ -247,6 +269,10 @@ If your unit test has a lot of requires/imports, you're probably not writing a u
 Generally, unit tests will test everything in `lib/` and (ideally) all of the angular controllers
 in the `ui/` folder.  If the code is structured properly, then it should be possible to isolate 
 the logic and test it without using angular, browserify, or any other heavy dependencies.
+
+ > In bedrock, the `src/ui/**/index.ts` files are not unit tested.  Their only purpose is to
+ > provide the glue that binds your raw classes to angular.  Therefore, there's no logic to test,
+ > and their behavior should be verified with an integration test.
 
 **The Wrong Way**: put it all in one file
 ```typescript
@@ -316,7 +342,7 @@ integration test watcher will NOT automatically start with the `start` command. 
 explicitly pass `-i` if you want integration tests to run**.
 
 Integration tests should live somewhere in the `app/` folder, as they'll likely require things like
-a DOM, angular, UIQ, and other peer dependencies.  Since the shell app also provides a similar
+a DOM, angular, UIQ, and other peer dependencies.  Since bedrock also provides a similar
 environment to the webapp, it's an ideal place to make sure all the pieces fit together.
 
 Writing integration tests is as simple as just creating a `*.spec.ts` file inside of the `app/`
@@ -349,7 +375,17 @@ test('first available option is checked', t => {
 
 We call them smoke tests.  They're generally run by CI/CD.
 
-## Other Tooling 
+## IQB
+
+IQB is the IQ Build tool, and it provides the actually build logic needed to develop with bedrock.
+It's a shell script that provides foundational tools to build, run, and develop in bedrock.
+
+IQB tasks can be overridden by creating a `build/taskname` file and making it executable.
+
+### iqb help
+
+Will cause iqb to examine itself and the `build/` directory to print information about which
+commands and flags are available.
 
 ### iqb update
 
@@ -361,14 +397,20 @@ This update will overwrite any changes to:
  * `build/deploy`
  * `build/start-server`
  * `build/update`
- * `docker-dev/Dockerfile`
- * `docker-dev/README.md`
- * `docker/Dockerfile`
- * `docker/package.json`
- * `docker/README.md`
 
 You should not make changes to any of these files.  Those changes will get clobbered the next time
 you run `iqb update`.
+
+`iqb update` will *also* update the NPM packages used by bedrock.  You can get a full list of these
+packages by looking at the update script.  Changing versions of those is also not recommended for
+the same reason.
+
+### llexec
+
+llexec is the result of me getting pretty fed up with GNU parallel.  More details are available
+in that project's repo: http://github.com/relateiq/llexec
+
+llexec is used to execute IQB tasks in parallel.
 
 ## SalesforceIQ Employees Only
 
@@ -391,3 +433,15 @@ you *shouldn't* run this locally, but instead should set up CI/CD in TeamCity.
 
 This script requires either docker-machine, the docker for mac beta, or a linux machine
 to work properly.
+
+### docker-bedrock-webserver
+
+A pretty minimal container that can be used to serve a bedrock application.  Intended use case is
+for DCOS but it should work anywhere.
+
+### docker-bedrock-build
+
+A container that's used by CI/CD to actually build bedrock.  This keeps all the dependencies in the
+container so the production engineering team doesn't need to update all our build agents just
+because someone's requirements changed.
+
