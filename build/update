@@ -67,7 +67,7 @@ git add -- "${system_files[@]}"
 # update iqb npm packages
 npm_packages=(
     aliasify@1.x
-    browserify@13.x
+    browserify@12.x
     chokidar-cli@1.x
     connect-livereload@0.x
     exorcist@0.x
